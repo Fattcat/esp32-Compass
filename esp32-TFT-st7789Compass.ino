@@ -31,6 +31,8 @@ TinyGPSPlus gps;
 Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RST);
 
 bool hasGPSFix = false;  // Sleduje stav GPS signálu
+unsigned long lastDotTime = 0;
+int dotCount = 0;  // Počet bodiek v animácii
 
 void setup() {
   // Inicializácia sériovej komunikácie a displeja
@@ -42,6 +44,58 @@ void setup() {
   tft.setRotation(1);  // Nastavenie rotácie displeja
   tft.invertDisplay(0); // Vypnutie invertovania displeja (zmeniť na 1, ak farby zostávajú invertné)
   tft.fillScreen(ST77XX_BLACK);
+
+  // Kontrola pripojenia GPS modulu
+  Serial.print("Kontrola pripojenia GPS modulu...");
+
+  bool gpsFound = false;
+  unsigned long startTime = millis();
+  while (millis() - startTime < 3000) {  // Čaká 3 sekundy na odpoveď GPS modulu
+    if (Serial2.available() > 0) {
+      gpsFound = true;
+      break;
+    }
+  }
+
+  if (gpsFound) {
+    Serial.println("GPS modul nájdený úspešne.");
+    tft.setCursor(20, 150);
+    tft.setTextColor(ST77XX_GREEN);
+    tft.setTextSize(2);
+    tft.print("GPS modul najdeny uspesne");
+    delay(2000);  // Zobrazí správu na 2 sekundy
+    tft.fillScreen(ST77XX_BLACK);  // Vymaže obrazovku
+  } else {
+    Serial.println("GPS modul nenájdený!");
+    tft.setCursor(30, 150);
+    tft.setTextColor(ST77XX_RED);
+    tft.setTextSize(2);
+    tft.print("GPS modul nenajdeny!");
+    while (true);  // Zastaví program, ak GPS modul nie je pripojený
+  }
+}
+
+void displayConnectingToSatellite() {
+  // Zobrazenie správy iba pri prvom spustení
+  tft.setCursor(30, 150);
+  tft.setTextColor(ST77XX_YELLOW);
+  tft.setTextSize(2);
+  tft.print("Pripajam sa k satelitu");
+
+  // Animácia bodiek
+  if (millis() - lastDotTime > 1000) {  // Každú sekundu pridá bodku
+    dotCount = (dotCount + 1) % 4;  // Opakuje sa od 0 do 3
+    lastDotTime = millis();
+
+    // Vymaže predchádzajúce bodky iba v oblasti animácie
+    tft.fillRect(150, 180, 60, 30, ST77XX_BLACK);
+
+    // Zobrazenie bodiek
+    for (int i = 0; i < dotCount; i++) {
+      tft.setCursor(150 + (i * 10), 180);
+      tft.print(".");
+    }
+  }
 }
 
 void displayNoSignal() {
@@ -61,15 +115,20 @@ void loop() {
 
   if (!gps.location.isValid()) {
     // Ak GPS nemá platné dáta
-    if (hasGPSFix) {  // Skontroluje, či došlo k strate signálu
-      displayNoSignal();
-      hasGPSFix = false;
+    if (!hasGPSFix) {
+      displayConnectingToSatellite();  // Zobrazuje animáciu pripájania
     }
   } else {
-    // Keď sú GPS dáta platné a zariadenie sa pohybuje
-    if (!hasGPSFix) {  // Ak bol signál obnovený, vyčistí displej
-      tft.fillScreen(ST77XX_BLACK);
+    // GPS má platné údaje, nastavíme fix
+    if (!hasGPSFix) {
       hasGPSFix = true;
+      tft.fillScreen(ST77XX_BLACK);
+      tft.setCursor(10, 10);
+      tft.setTextColor(ST77XX_GREEN);
+      tft.setTextSize(2);
+      tft.print("Pocet satelitov: ");
+      tft.print(gps.satellites.value());  // Zobrazí počet satelitov
+      delay(2000);  // Zobrazí správu na 2 sekundy
     }
 
     if (gps.location.isUpdated() && gps.speed.isValid() && gps.course.isValid()) {
