@@ -1,5 +1,8 @@
 # esp32-GPS-Compass
 TFT Display code for COMPAS
+<div align="center" height: 200px; width: 50px;>
+  <img src="https://komarev.com/ghpvc/?username=Fattcat&style=flat-square" alt="Visitor Badge">
+</div>
 # Connection
 ## GPS - esp32
 - VCC -> 3.3V
