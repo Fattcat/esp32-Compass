@@ -8,7 +8,7 @@
 #include <SPI.h>
 
 // TFT displej - piny (upravit podla zapojenia)
-#define TFT_CS   5
+#define TFT_CS   15
 #define TFT_DC   2
 #define TFT_RST  4
 
