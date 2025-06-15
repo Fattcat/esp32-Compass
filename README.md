@@ -1,9 +1,12 @@
 # esp32-Compass
+
 TFT Display code for COMPASS
 <div align="center" height: 200px; width: 50px;>
   <img src="https://komarev.com/ghpvc/?username=Fattcat&style=flat-square" alt="Visitor Badge">
 </div>
+
 # Connection
+
 ## GPS neo6m - esp32
 - VCC -> 3.3V
 - GND -> GND
